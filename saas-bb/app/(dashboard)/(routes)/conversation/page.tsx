@@ -1,5 +1,6 @@
 "use client";
 import * as z from "zod";
+import axios from "axios";
 import { Heading } from "@/components/heading";
 import { MessageSquare } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -8,7 +9,18 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ChatCompletionRequestMessage } from "openai";
+import { Empty } from "@/components/empty";
+import { Loader } from "@/components/loader";
+import { cn } from "@/lib/utils";
+import { UserAvater } from "@/components/user-avatar";
+import { BotAvatar } from "@/components/bot-avatar";
+
 const ConversationPage = () => {
+    const router = useRouter();
+    const [messages,setMessages] = useState<ChatCompletionRequestMessage[]>([]);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver:zodResolver(formSchema),
         defaultValues:{
@@ -17,7 +29,23 @@ const ConversationPage = () => {
     });
     const isLoading = form.formState.isSubmitting;
     const onSubmit = async (values:z.infer<typeof formSchema>) =>{
-        console.log(values);
+        try{
+            const userMessage:ChatCompletionRequestMessage = {
+                role: "user",
+                content: values.prompt,
+            };
+            const newMessage = [...messages,userMessage];
+            const response = await axios.post("/api/conversation",{
+                messages:newMessage,
+            });
+            setMessages((current) => [...current,userMessage,response.data]);
+            form.reset();
+        }
+        catch(error:any){
+            console.log(error);
+        }finally{
+            router.refresh();
+        }
     }
     return (
         <div > 
@@ -59,12 +87,35 @@ const ConversationPage = () => {
                             )}
                             />
                             <Button className="col-span-12 lg:col-span-2 w-full "disabled={isLoading}>
-                                Generate</Button>    
+                                Generate
+                                </Button>    
                         </form>
                     </Form>
                 </div>
                 <div className="space-y-4 mt-4">
-                    Message Content
+                    {isLoading &&(
+                        <div className="p-8 rounded-lg w-full flex items-center
+                        justify-center bg-muted">
+                            <Loader/>
+                        </div>
+                    )}
+                    {messages.length ===0 && !isLoading &&(
+                       <Empty label={"No Conversation started"}/>
+                    )}
+                    <div className="flex flex-col-reverse gap-y-4">
+                        {messages.map((messages) =>(
+                            <div 
+                            key={messages.content}
+                            className={cn("p-8 w-full flex items-start gap-x-8 rounded-lg",
+                            messages.role=== "user"? "bg-white border border-black/10":"bg-muted")}>
+                                {messages.role ==="user"? <UserAvater/> : <BotAvatar/>}
+                                <p className="text-sm">
+                                    {messages.content}
+
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
              </div>
