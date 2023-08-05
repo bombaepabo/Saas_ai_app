@@ -2,7 +2,7 @@
 import * as z from "zod";
 import axios from "axios";
 import { Heading } from "@/components/heading";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Music, Video, VideoIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { formSchema } from "./constants";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -18,9 +18,9 @@ import { cn } from "@/lib/utils";
 import { UserAvater } from "@/components/user-avatar";
 import { BotAvatar } from "@/components/bot-avatar";
 
-const ConversationPage = () => {
+const VideoPage = () => {
     const router = useRouter();
-    const [messages,setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+    const [video,setVideo] = useState<string>();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver:zodResolver(formSchema),
         defaultValues:{
@@ -30,15 +30,9 @@ const ConversationPage = () => {
     const isLoading = form.formState.isSubmitting;
     const onSubmit = async (values:z.infer<typeof formSchema>) =>{
         try{
-            const userMessage:ChatCompletionRequestMessage = {
-                role: "user",
-                content: values.prompt,
-            };
-            const newMessage = [...messages,userMessage];
-            const response = await axios.post("/api/conversation",{
-                messages:newMessage,
-            });
-            setMessages((current) => [...current,userMessage,response.data]);
+            setVideo(undefined);
+            const response = await axios.post("/api/video",values);
+            setVideo(response.data[0]);
             form.reset();
         }
         catch(error:any){
@@ -49,11 +43,11 @@ const ConversationPage = () => {
     }
     return (
         <div > 
-            <Heading title={"Conversation"} 
-            description={"Our most advanced conversation model."} 
-            icon={MessageSquare}
-            iconColor="text-violet-500"
-            bgColor="bg-violet-500/10"/>
+            <Heading title={"Video Generation"} 
+            description={"Turn your prompt into video."} 
+            icon={VideoIcon}
+            iconColor="text-orange-700"
+            bgColor="bg-orange-700/10"/>
             <div className="px-4 lg:px-8">
                 <div>
                     <Form{...form}>
@@ -79,7 +73,7 @@ const ConversationPage = () => {
                                        focus-visible:ring-0
                                        focus-visible:ring-transparent"
                                        disabled= {isLoading}
-                                       placeholder="How do I calculate the radius of a circle?"
+                                       placeholder="dumb guy flying in the sky"
                                        {...field}/> 
                                     </FormControl>
 
@@ -99,27 +93,19 @@ const ConversationPage = () => {
                             <Loader/>
                         </div>
                     )}
-                    {messages.length ===0 && !isLoading &&(
-                       <Empty label={"No Conversation started"}/>
+                    {!video && !isLoading &&(
+                       <Empty label={"No video generated"}/>
                     )}
-                    <div className="flex flex-col-reverse gap-y-4">
-                        {messages.map((messages) =>(
-                            <div 
-                            key={messages.content}
-                            className={cn("p-8 w-full flex items-start gap-x-8 rounded-lg",
-                            messages.role=== "user"? "bg-white border border-black/10":"bg-muted")}>
-                                {messages.role ==="user"? <UserAvater/> : <BotAvatar/>}
-                                <p className="text-sm">
-                                    {messages.content}
-
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                    {video &&(
+                       <video className="w-full aspect-video mt-8 
+                       rounded-lg border bg-black" controls>
+                        <source src={video}/>
+                       </video>
+                    )}
                 </div>
             </div>
              </div>
 
     );
 }
-export default ConversationPage;
+export default VideoPage;
