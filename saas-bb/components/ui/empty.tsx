@@ -11,7 +11,7 @@ export const Empty = ({
             <div className="relative h-72 w-72">
                 <Image alt={"Empty"}
                 fill
-                src={"/empty.png"}/>
+                src={"/Empty.png"}/>
             </div>
             <p className="text-muted-foreground text-sm text-center">
                 {label}
