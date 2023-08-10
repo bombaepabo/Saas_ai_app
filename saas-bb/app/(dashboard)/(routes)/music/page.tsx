@@ -11,13 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChatCompletionRequestMessage } from "openai";
 import { Empty } from "@/components/ui/empty";
 import { Loader } from "@/components/loader";
-import { cn } from "@/lib/utils";
-import { UserAvater } from "@/components/user-avatar";
-import { BotAvatar } from "@/components/bot-avatar";
 import { useProModal } from "@/hooks/use-pro-modal";
+import toast from "react-hot-toast";
 
 const MusicPage = () => {
     const proModal = useProModal();
@@ -41,7 +38,10 @@ const MusicPage = () => {
         catch(error:any){
             if(error?.response?.status === 403){
                 proModal.onOpen();
-            }        }finally{
+            }else{
+                toast.error("Something went wrong"); 
+    
+            }       }finally{
             router.refresh();
         }
     }
